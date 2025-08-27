@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -109,6 +110,12 @@ export default function RegisterForm() {
           >
             {isLoading ? 'Creating account...' : 'Create account'}
           </button>
+        </div>
+        <div className="text-center text-sm mt-4">
+          Already have an account? {' '}
+          <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            Sign in
+          </Link>
         </div>
       </form>
     </div>
