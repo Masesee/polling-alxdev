@@ -1,22 +1,44 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const message = searchParams.get('message');
+  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Implement registration functionality with Supabase
-    console.log('Registration attempt with:', { email, name });
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    setError(null);
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        },
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    // After successful registration, redirect to login or a verification page
+    router.push('/auth/login?message=Check your email for a verification link');
     setIsLoading(false);
   };
 
@@ -28,6 +50,8 @@ export default function RegisterForm() {
           Sign up to create and manage polls
         </p>
       </div>
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+      {message && <p className="text-green-500 text-sm text-center">{message}</p>}
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4 rounded-md shadow-sm">
           <div>

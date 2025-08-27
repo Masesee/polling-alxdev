@@ -1,21 +1,34 @@
 'use client';
 
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Implement login functionality with Supabase
-    console.log('Login attempt with:', { email });
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    router.push('/polls');
     setIsLoading(false);
   };
 
@@ -27,6 +40,7 @@ export default function LoginForm() {
           Sign in to manage your polls
         </p>
       </div>
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4 rounded-md shadow-sm">
           <div>
