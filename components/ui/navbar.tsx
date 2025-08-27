@@ -45,7 +45,7 @@ export default function Navbar() {
           {!isLoading && user ? (
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300 text-sm">
-                {user.email}
+                {user.user_metadata?.full_name || user.email}
               </span>
               <button 
                 onClick={handleLogout}
