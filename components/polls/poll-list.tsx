@@ -64,32 +64,36 @@ export default function PollList() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Your Polls</h2>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         {polls.map((poll) => (
-          <div key={poll.id} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="font-medium text-lg">{poll.question}</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Created on {formatDate(poll.createdAt)}
+          <div key={poll.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
+            <h3 className="font-medium text-lg mb-2 dark:text-white">{poll.question}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
+              {poll.options.length} options
+              <span className="mx-1">•</span>
+              {poll.options.reduce((sum, option) => sum + option.votes, 0)} total votes
             </p>
-            <div className="mt-4 space-y-2">
+            <div className="space-y-2 mb-4">
               {poll.options.map((option) => (
-                <div key={option.id} className="flex justify-between">
+                <div key={option.id} className="flex justify-between text-sm dark:text-gray-200">
                   <span>{option.text}</span>
-                  <span className="text-gray-600">{option.votes} votes</span>
+                  <span className="text-gray-600 dark:text-gray-300">{option.votes} votes</span>
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex space-x-2">
+            <p className="text-xs text-gray-400 dark:text-gray-400 mb-3">
+              Created on {formatDate(poll.createdAt)}
+            </p>
+            <div className="flex space-x-4">
               <a
                 href={`/polls/${poll.id}`}
-                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
               >
                 View Results
               </a>
               <a
                 href={`/share/${poll.id}`}
-                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
               >
                 Share Poll
               </a>
