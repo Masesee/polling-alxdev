@@ -6,29 +6,33 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
+  const applyTheme = (t: 'light' | 'dark') => {
+    const root = document.documentElement
+    const body = document.body
+    if (t === 'dark') {
+      root.classList.add('dark')
+      body.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+      body.classList.remove('dark')
+    }
+    window.localStorage.setItem('theme', t)
+  }
+
   useEffect(() => {
     setMounted(true)
     const persisted = window.localStorage.getItem('theme') as 'light' | 'dark' | null
     let initial: 'light' | 'dark' = 'light'
     if (persisted) {
       initial = persisted
-    } else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      initial = prefersDark ? 'dark' : 'light'
     }
     setTheme(initial)
-    const root = document.documentElement
-    if (initial === 'dark') root.classList.add('dark')
-    else root.classList.remove('dark')
-    window.localStorage.setItem('theme', initial)
+    applyTheme(initial)
   }, [])
 
   useEffect(() => {
     if (!mounted) return
-    const root = document.documentElement
-    if (theme === 'dark') root.classList.add('dark')
-    else root.classList.remove('dark')
-    window.localStorage.setItem('theme', theme)
+    applyTheme(theme)
   }, [theme, mounted])
 
   return (
