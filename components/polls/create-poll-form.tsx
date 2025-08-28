@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { createPoll } from '../../lib/actions/polls';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import { createPoll, type CreatePollResult } from '../../lib/actions/polls';
+import { Alert } from '../ui/alert';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -18,6 +20,7 @@ function SubmitButton() {
 }
 
 export default function CreatePollForm() {
+  const router = useRouter();
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [activeTab, setActiveTab] = useState('basic');
@@ -25,6 +28,25 @@ export default function CreatePollForm() {
   const [requireLogin, setRequireLogin] = useState(true);
   const [endDate, setEndDate] = useState('');
   const optionsJoined = useMemo(() => options.join('\n'), [options]);
+  const questionRef = useRef<HTMLInputElement | null>(null);
+  const firstOptionRef = useRef<HTMLInputElement | null>(null);
+
+  const [state, formAction] = useFormState<CreatePollResult, FormData>(createPoll as any, { success: false });
+
+  useEffect(() => {
+    if (!state) return;
+    if ('success' in state && state.success === true && state.pollId) {
+      router.push(`/polls/${state.pollId}`);
+      return;
+    }
+    if ('fieldErrors' in state && state.fieldErrors) {
+      if (state.fieldErrors.question && questionRef.current) {
+        questionRef.current.focus();
+      } else if (state.fieldErrors.options && firstOptionRef.current) {
+        firstOptionRef.current.focus();
+      }
+    }
+  }, [state, router]);
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -52,9 +74,13 @@ export default function CreatePollForm() {
       </div>
       
       {/* Tabs */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200" role="tablist" aria-label="Create poll tabs">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'basic'}
+          aria-controls="tab-panel-basic"
+          id="tab-basic"
           className={`py-2 px-4 ${activeTab === 'basic' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
           onClick={() => setActiveTab('basic')}
         >
@@ -62,6 +88,10 @@ export default function CreatePollForm() {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === 'settings'}
+          aria-controls="tab-panel-settings"
+          id="tab-settings"
           className={`py-2 px-4 ${activeTab === 'settings' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
           onClick={() => setActiveTab('settings')}
         >
@@ -69,9 +99,13 @@ export default function CreatePollForm() {
         </button>
       </div>
       
-      <form className="mt-4 space-y-6" action={createPoll}>
+      {!!state && 'success' in state && state.success === false && state.message && (
+        <Alert variant="error" title="Unable to create poll" description={state.message} />
+      )}
+
+      <form className="mt-4 space-y-6" action={formAction} aria-describedby="form-errors">
         {activeTab === 'basic' && (
-          <div className="space-y-4">
+          <div className="space-y-4" id="tab-panel-basic" role="tabpanel" aria-labelledby="tab-basic">
             <div>
               <label htmlFor="question" className="block text-sm font-medium text-gray-700">
                 Poll Question
@@ -85,7 +119,15 @@ export default function CreatePollForm() {
                 placeholder="What would you like to ask?"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
+                aria-invalid={!!(state && 'fieldErrors' in state && state.fieldErrors?.question)}
+                aria-describedby={state && 'fieldErrors' in state && state.fieldErrors?.question ? 'question-error' : undefined}
+                ref={questionRef}
               />
+              {state && 'fieldErrors' in state && state.fieldErrors?.question && (
+                <p id="question-error" className="mt-1 text-sm text-red-600">
+                  {state.fieldErrors.question}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -103,6 +145,9 @@ export default function CreatePollForm() {
                     placeholder={`Option ${index + 1}`}
                     value={option}
                     onChange={(e) => handleOptionChange(index, e.target.value)}
+                    aria-invalid={!!(state && 'fieldErrors' in state && state.fieldErrors?.options)}
+                    aria-describedby={state && 'fieldErrors' in state && state.fieldErrors?.options ? 'options-error' : undefined}
+                    ref={index === 0 ? firstOptionRef : undefined}
                   />
                   {options.length > 2 && (
                     <button
@@ -115,6 +160,11 @@ export default function CreatePollForm() {
                   )}
                 </div>
               ))}
+              {state && 'fieldErrors' in state && state.fieldErrors?.options && (
+                <p id="options-error" className="text-sm text-red-600">
+                  {state.fieldErrors.options}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={addOption}
@@ -127,7 +177,7 @@ export default function CreatePollForm() {
         )}
         
         {activeTab === 'settings' && (
-          <div className="space-y-4">
+          <div className="space-y-4" id="tab-panel-settings" role="tabpanel" aria-labelledby="tab-settings">
             <h3 className="text-lg font-medium dark:text-white">Poll Settings</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Configure question options for your poll</p>
             
