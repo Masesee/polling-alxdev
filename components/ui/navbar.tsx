@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from './theme-toggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -29,7 +30,7 @@ export default function Navbar() {
           SnapVote
         </Link>
         
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-center">
           <Link 
             href="/polls" 
             className={`hover:text-blue-600 transition-colors dark:text-gray-200 ${pathname.startsWith('/polls') && pathname !== '/polls/create' ? 'text-blue-600 font-medium' : ''}`}
@@ -42,6 +43,7 @@ export default function Navbar() {
           >
             Create Poll
           </Link>
+          <ThemeToggle />
           {!isLoading && user ? (
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300 text-sm">

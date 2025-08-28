@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useMemo, useRef, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { createPoll, type CreatePollResult } from '../../lib/actions/polls';
 import { Alert } from '../ui/alert';
@@ -31,7 +31,7 @@ export default function CreatePollForm() {
   const questionRef = useRef<HTMLInputElement | null>(null);
   const firstOptionRef = useRef<HTMLInputElement | null>(null);
 
-  const [state, formAction] = useFormState<CreatePollResult, FormData>(createPoll as any, { success: false });
+  const [state, formAction] = useActionState<CreatePollResult, FormData>(createPoll as any, { success: false });
 
   useEffect(() => {
     if (!state) return;

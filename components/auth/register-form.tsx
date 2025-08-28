@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,8 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const nameRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const message = searchParams.get('message');
@@ -21,6 +24,16 @@ export default function RegisterForm() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    const nextFieldErrors: { name?: string; email?: string; password?: string } = {};
+    if (!name) nextFieldErrors.name = 'Full name is required';
+    if (!email) nextFieldErrors.email = 'Email is required';
+    if (!password) nextFieldErrors.password = 'Password is required';
+    setFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setIsLoading(false);
+      if (nextFieldErrors.name && nameRef.current) nameRef.current.focus();
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -51,7 +64,7 @@ export default function RegisterForm() {
           Sign up to create and manage polls
         </p>
       </div>
-      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+      {error && <p role="alert" className="text-red-500 text-sm text-center">{error}</p>}
       {message && <p className="text-green-500 text-sm text-center">{message}</p>}
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4 rounded-md shadow-sm">
@@ -64,11 +77,17 @@ export default function RegisterForm() {
               name="name"
               type="text"
               required
-              className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className={`relative block w-full appearance-none rounded-md px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:outline-none sm:text-sm border ${fieldErrors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'}`}
               placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              aria-invalid={!!fieldErrors.name}
+              aria-describedby={fieldErrors.name ? 'name-error' : undefined}
+              ref={nameRef}
             />
+            {fieldErrors.name && (
+              <p id="name-error" className="mt-1 text-sm text-red-600">{fieldErrors.name}</p>
+            )}
           </div>
           <div>
             <label htmlFor="email" className="sr-only">
@@ -79,11 +98,16 @@ export default function RegisterForm() {
               name="email"
               type="email"
               required
-              className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className={`relative block w-full appearance-none rounded-md px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:outline-none sm:text-sm border ${fieldErrors.email ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'}`}
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? 'email-error' : undefined}
             />
+            {fieldErrors.email && (
+              <p id="email-error" className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
+            )}
           </div>
           <div>
             <label htmlFor="password" className="sr-only">
@@ -94,11 +118,16 @@ export default function RegisterForm() {
               name="password"
               type="password"
               required
-              className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className={`relative block w-full appearance-none rounded-md px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:outline-none sm:text-sm border ${fieldErrors.password ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'}`}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={fieldErrors.password ? 'password-error' : undefined}
             />
+            {fieldErrors.password && (
+              <p id="password-error" className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
+            )}
           </div>
         </div>
 
@@ -106,8 +135,9 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
           >
+            {isLoading && <Spinner className="text-white" />}
             {isLoading ? 'Creating account...' : 'Create account'}
           </button>
         </div>

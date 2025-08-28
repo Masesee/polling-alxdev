@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Poll } from '../../lib/types';
 import { formatDate } from '../../lib/utils';
+import { Spinner } from '../ui/spinner';
 
 export default function PollList() {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -51,13 +53,21 @@ export default function PollList() {
   }, []);
 
   if (isLoading) {
-    return <div className="text-center py-10">Loading polls...</div>;
+    return (
+      <div className="text-center py-10 flex flex-col items-center gap-3">
+        <Spinner size={24} className="text-blue-600" />
+        <p className="text-gray-600 dark:text-gray-300">Loading polls...</p>
+      </div>
+    );
   }
 
   if (polls.length === 0) {
     return (
-      <div className="text-center py-10">
-        <p className="text-gray-500">No polls found. Create your first poll!</p>
+      <div className="text-center py-16 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+        <p className="text-gray-600 dark:text-gray-300 mb-4">No polls created yet.</p>
+        <Link href="/polls/create" className="inline-flex items-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Create your first poll
+        </Link>
       </div>
     );
   }
@@ -66,7 +76,7 @@ export default function PollList() {
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-3">
         {polls.map((poll) => (
-          <div key={poll.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
+          <div key={poll.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800 transition-transform hover:-translate-y-0.5">
             <h3 className="font-medium text-lg mb-2 dark:text-white">{poll.question}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
               {poll.options.length} options
