@@ -1,23 +1,39 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import PollList from '../../components/polls/poll-list';
-import { useAuth } from '@/lib/context/auth-context';
+import { createServerSupabase } from '@/lib/supabase/server';
+import Link from 'next/link';
 
-export default function PollsPage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+export default async function PollsPage() {
+  const supabase = createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading || !user) {
-    return <div className="text-center py-10 dark:text-white">Loading...</div>;
+  if (!user) {
+    return (
+      <div className="container mx-auto py-6 px-4 dark:bg-gray-900">
+        <div className="flex justify-between items-center mb-6 dark:text-white">
+          <h1 className="text-2xl font-bold">My Polls</h1>
+          <Link href="/auth/login" className="text-sm text-blue-600 hover:text-blue-700">Login</Link>
+        </div>
+        <div className="text-gray-600 dark:text-gray-300">Please log in to view your polls.</div>
+      </div>
+    );
   }
+
+  const { data: polls } = await supabase
+    .from('polls')
+    .select('id, question, created_at, poll_options ( id, text )')
+    .eq('created_by', user.id)
+    .order('created_at', { ascending: false });
+
+  const mapped = (polls || []).map((p: any) => ({
+    id: p.id as string,
+    question: p.question as string,
+    options: (p.poll_options || []).map((o: any) => ({ id: o.id as string, text: o.text as string, votes: 0 })),
+    createdBy: user.id,
+    createdAt: new Date(p.created_at as string),
+    isActive: true,
+  }));
 
   return (
     <div className="container mx-auto py-6 px-4 dark:bg-gray-900">
