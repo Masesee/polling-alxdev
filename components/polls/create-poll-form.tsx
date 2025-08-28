@@ -1,16 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { generatePollId } from '../../lib/utils';
+import { useMemo, useState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { createPoll } from '../../lib/actions/polls';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {pending ? 'Creating Poll...' : 'Create Poll'}
+    </button>
+  );
+}
 
 export default function CreatePollForm() {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [allowMultipleOptions, setAllowMultipleOptions] = useState(false);
   const [requireLogin, setRequireLogin] = useState(true);
   const [endDate, setEndDate] = useState('');
+  const optionsJoined = useMemo(() => options.join('\n'), [options]);
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -29,42 +43,7 @@ export default function CreatePollForm() {
     setOptions(newOptions);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Filter out empty options
-    const validOptions = options.filter(option => option.trim() !== '');
-    
-    if (validOptions.length < 2) {
-      alert('Please provide at least 2 options');
-      setIsLoading(false);
-      return;
-    }
-    
-    // TODO: Implement poll creation with Supabase
-    const pollData = {
-      id: generatePollId(),
-      question,
-      options: validOptions.map((text, index) => ({
-        id: `option-${index}`,
-        text,
-        votes: 0
-      })),
-      createdAt: new Date(),
-      isActive: true
-    };
-    
-    console.log('Creating poll:', pollData);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    
-    // Reset form
-    setQuestion('');
-    setOptions(['', '']);
-  };
+  // Validation is enforced by the server action; client keeps UX-friendly controls
 
   return (
     <div className="w-full max-w-2xl space-y-8">
@@ -90,7 +69,7 @@ export default function CreatePollForm() {
         </button>
       </div>
       
-      <form className="mt-4 space-y-6" onSubmit={handleSubmit}>
+      <form className="mt-4 space-y-6" action={createPoll}>
         {activeTab === 'basic' && (
           <div className="space-y-4">
             <div>
@@ -113,6 +92,8 @@ export default function CreatePollForm() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Poll Options
               </label>
+              {/* Hidden field aggregates options for the server action */}
+              <input type="hidden" name="options" value={optionsJoined} />
               {options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <input
@@ -153,39 +134,39 @@ export default function CreatePollForm() {
             <div className="space-y-3">
               <div className="flex items-center">
                 <input
-                  id="allow-multiple"
-                  name="allow-multiple"
+                  id="allowMultiple"
+                  name="allowMultiple"
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   checked={allowMultipleOptions}
                   onChange={(e) => setAllowMultipleOptions(e.target.checked)}
                 />
-                <label htmlFor="allow-multiple" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
+                <label htmlFor="allowMultiple" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
                   Allow users to select multiple options
                 </label>
               </div>
               
               <div className="flex items-center">
                 <input
-                  id="require-login"
-                  name="require-login"
+                  id="requireLogin"
+                  name="requireLogin"
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   checked={requireLogin}
                   onChange={(e) => setRequireLogin(e.target.checked)}
                 />
-                <label htmlFor="require-login" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
+                <label htmlFor="requireLogin" className="ml-2 block text-sm text-gray-700 dark:text-gray-200">
                   Require users to be logged in to vote
                 </label>
               </div>
               
               <div>
-                <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                   Poll End Date (Optional)
                 </label>
                 <input
-                  id="end-date"
-                  name="end-date"
+                  id="endDate"
+                  name="endDate"
                   type="date"
                   className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                   value={endDate}
@@ -203,13 +184,7 @@ export default function CreatePollForm() {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="rounded border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Creating Poll...' : 'Create Poll'}
-          </button>
+          <SubmitButton />
         </div>
       </form>
     </div>
