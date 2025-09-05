@@ -2,12 +2,20 @@ import PollList from '../../components/polls/poll-list';
 import { createServerSupabase } from '@/lib/supabase/server';
 import Link from 'next/link';
 
+/**
+ * Renders the user's polls dashboard page.
+ * This is a server-side component that fetches polls created by the authenticated user
+ * directly from Supabase and displays them using the PollList component.
+ */
 export default async function PollsPage() {
+  // Initialize Supabase client for server-side operations.
   const supabase = createServerSupabase();
+  // Fetch the authenticated user's session.
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // If no user is authenticated, prompt them to log in.
   if (!user) {
     return (
       <div className="container mx-auto py-6 px-4 dark:bg-gray-900">
@@ -20,12 +28,15 @@ export default async function PollsPage() {
     );
   }
 
+  // Fetch polls created by the current user from the 'polls' table,
+  // joining with 'poll_options' to get poll choices.
   const { data: polls } = await supabase
     .from('polls')
     .select('id, question, created_at, poll_options ( id, text )')
     .eq('created_by', user.id)
     .order('created_at', { ascending: false });
 
+  // Map the fetched poll data to a more usable format for the client-side components.
   const mapped = (polls || []).map((p: any) => ({
     id: p.id as string,
     question: p.question as string,
@@ -46,6 +57,7 @@ export default async function PollsPage() {
           Create New Poll
         </a>
       </div>
+      {/* The PollList component will display the fetched and mapped polls. */}
       <PollList />
     </div>
   );

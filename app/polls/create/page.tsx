@@ -1,5 +1,9 @@
 import CreatePollForm from '../../../components/polls/create-poll-form';
 
+/**
+ * Renders the page for creating a new poll.
+ * This page displays the CreatePollForm component, allowing users to input poll questions and options.
+ */
 export default function CreatePollPage() {
   return (
     <div className="container mx-auto py-6 px-4 dark:bg-gray-900">

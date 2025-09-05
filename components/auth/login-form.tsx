@@ -6,41 +6,61 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Spinner } from '@/components/ui/spinner';
 
+/**
+ * LoginForm component handles user authentication via email and password.
+ * It provides input fields for email and password, client-side validation,
+ * and integrates with Supabase for authentication.
+ */
 export default function LoginForm() {
+  // State variables for email, password, loading status, and error messages.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // State to manage validation errors for individual fields.
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  // Ref for the email input field to allow programmatic focus.
   const emailRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
+  /**
+   * Handles the form submission for user login.
+   * Performs client-side validation and attempts to sign in the user with Supabase.
+   * @param e The form event.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    // Initialize an object to hold validation errors.
     const nextFieldErrors: { email?: string; password?: string } = {};
+    // Validate if email and password fields are not empty.
     if (!email) nextFieldErrors.email = 'Email is required';
     if (!password) nextFieldErrors.password = 'Password is required';
     setFieldErrors(nextFieldErrors);
+    
+    // If there are any validation errors, stop the submission and focus on the email field if it has an error.
     if (Object.keys(nextFieldErrors).length > 0) {
       setIsLoading(false);
       if (nextFieldErrors.email && emailRef.current) emailRef.current.focus();
       return;
     }
 
+    // Attempt to sign in with Supabase using the provided email and password.
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    // If an error occurs during Supabase authentication, display the error message.
     if (error) {
       setError(error.message);
       setIsLoading(false);
       return;
     }
 
+    // On successful login, redirect the user to the polls page.
     router.push('/polls');
     setIsLoading(false);
   };

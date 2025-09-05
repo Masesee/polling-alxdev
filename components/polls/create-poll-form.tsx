@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation';
 import { createPoll, type CreatePollResult } from '../../lib/actions/polls';
 import { Alert } from '../ui/alert';
 
+/**
+ * SubmitButton component displays a button for form submission.
+ * It shows a loading state when the form is pending.
+ */
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -19,26 +23,42 @@ function SubmitButton() {
   );
 }
 
+/**
+ * CreatePollForm component provides a form for users to create new polls.
+ * It includes fields for the poll question, multiple options, and optional settings like
+ * allowing multiple selections, requiring login, and setting an end date.
+ * It integrates with a server action (`createPoll`) for form submission and handles client-side state and validation feedback.
+ */
 export default function CreatePollForm() {
   const router = useRouter();
+  // State for the poll question.
   const [question, setQuestion] = useState('');
+  // State for poll options, initialized with two empty options.
   const [options, setOptions] = useState(['', '']);
+  // State to manage active tab (Basic Info or Settings).
   const [activeTab, setActiveTab] = useState('basic');
+  // State for poll settings.
   const [allowMultipleOptions, setAllowMultipleOptions] = useState(false);
   const [requireLogin, setRequireLogin] = useState(true);
   const [endDate, setEndDate] = useState('');
+  // Memoized string of options joined by newline for hidden input.
   const optionsJoined = useMemo(() => options.join('\n'), [options]);
+  // Refs for focusing input fields on validation errors.
   const questionRef = useRef<HTMLInputElement | null>(null);
   const firstOptionRef = useRef<HTMLInputElement | null>(null);
 
+  // useActionState hook to manage form submission state and server action results.
   const [state, formAction] = useActionState<CreatePollResult, FormData>(createPoll as any, { success: false });
 
+  // Effect hook to handle redirection or focus on error after form submission.
   useEffect(() => {
     if (!state) return;
+    // If poll creation was successful, redirect to the new poll's detail page.
     if ('success' in state && state.success === true && state.pollId) {
       router.push(`/polls/${state.pollId}`);
       return;
     }
+    // If there are field errors, focus on the relevant input field.
     if ('fieldErrors' in state && state.fieldErrors) {
       if (state.fieldErrors.question && questionRef.current) {
         questionRef.current.focus();
@@ -48,16 +68,29 @@ export default function CreatePollForm() {
     }
   }, [state, router]);
 
+  /**
+   * Handles changes to an individual poll option input field.
+   * @param index The index of the option being changed.
+   * @param value The new value of the option.
+   */
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
     newOptions[index] = value;
     setOptions(newOptions);
   };
 
+  /**
+   * Adds a new empty option field to the poll.
+   */
   const addOption = () => {
     setOptions([...options, '']);
   };
 
+  /**
+   * Removes an option field at a specific index.
+   * Ensures a minimum of two options are always present.
+   * @param index The index of the option to remove.
+   */
   const removeOption = (index: number) => {
     if (options.length <= 2) return; // Minimum 2 options required
     const newOptions = [...options];
@@ -65,7 +98,7 @@ export default function CreatePollForm() {
     setOptions(newOptions);
   };
 
-  // Validation is enforced by the server action; client keeps UX-friendly controls
+  // Client-side validation is minimal as server action handles comprehensive validation.
 
   return (
     <div className="w-full max-w-2xl space-y-8">
@@ -73,7 +106,7 @@ export default function CreatePollForm() {
         <h1 className="text-2xl font-bold">Create New Poll</h1>
       </div>
       
-      {/* Tabs */}
+      {/* Tab navigation for Basic Info and Settings */}
       <div className="flex border-b border-gray-200" role="tablist" aria-label="Create poll tabs">
         <button
           type="button"
@@ -99,6 +132,7 @@ export default function CreatePollForm() {
         </button>
       </div>
       
+      {/* Display error alert if poll creation fails */}
       {!!state && 'success' in state && state.success === false && state.message && (
         <Alert variant="error" title="Unable to create poll" description={state.message} />
       )}

@@ -7,34 +7,52 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Spinner } from '@/components/ui/spinner';
 
+/**
+ * RegisterForm component allows new users to create an account.
+ * It collects full name, email, and password, performs client-side validation,
+ * and integrates with Supabase for user registration.
+ */
 export default function RegisterForm() {
+  // State variables for name, email, password, loading status, and error messages.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // State to manage validation errors for individual fields.
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  // Ref for the name input field to allow programmatic focus.
   const nameRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const message = searchParams.get('message');
   const supabase = createClient();
 
+  /**
+   * Handles the form submission for user registration.
+   * Performs client-side validation and attempts to sign up the user with Supabase.
+   * @param e The form event.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    // Initialize an object to hold validation errors.
     const nextFieldErrors: { name?: string; email?: string; password?: string } = {};
+    // Validate if name, email, and password fields are not empty.
     if (!name) nextFieldErrors.name = 'Full name is required';
     if (!email) nextFieldErrors.email = 'Email is required';
     if (!password) nextFieldErrors.password = 'Password is required';
     setFieldErrors(nextFieldErrors);
+    
+    // If there are any validation errors, stop the submission and focus on the name field if it has an error.
     if (Object.keys(nextFieldErrors).length > 0) {
       setIsLoading(false);
       if (nextFieldErrors.name && nameRef.current) nameRef.current.focus();
       return;
     }
 
+    // Attempt to sign up with Supabase using the provided details.
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -45,13 +63,14 @@ export default function RegisterForm() {
       },
     });
 
+    // If an error occurs during Supabase registration, display the error message.
     if (error) {
       setError(error.message);
       setIsLoading(false);
       return;
     }
 
-    // After successful registration, redirect to login or a verification page
+    // On successful registration, redirect to the login page with a verification message.
     router.push('/auth/login?message=Check your email for a verification link');
     setIsLoading(false);
   };
