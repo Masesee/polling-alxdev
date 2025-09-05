@@ -1,6 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+// Ensure Request is defined for test environment
+if (typeof Request === 'undefined' && typeof global !== 'undefined') {
+  // @ts-ignore - Mock Request for test environment
+  global.Request = class MockRequest {};
+}
+
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const pollId = params.id;
     const body = await request.json();
