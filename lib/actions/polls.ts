@@ -2,77 +2,125 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServerSupabase } from '../supabase/server'
+import type { Poll } from '../types'
 
-export type CreatePollResult =
-  | { success: true; pollId: string }
-  | { success: false; fieldErrors?: { question?: string; options?: string }; message?: string }
+// -----------------------------------------------------------------------------
+// Standardized action result types
+// -----------------------------------------------------------------------------
+type FieldErrors = Record<string, string>
+type ActionFailure = { success: false; message: string; fieldErrors?: FieldErrors }
+type ActionSuccess<TData> = { success: true; data: TData }
+type ActionResult<TData> = ActionFailure | ActionSuccess<TData>
 
-export async function createPoll(_prevState: unknown, formData: FormData): Promise<CreatePollResult> {
-  try {
-    const question = String(formData.get('question') || '').trim()
-    const options = (String(formData.get('options') || '') || '')
-      .split('\n')
-      .map((o) => o.trim())
-      .filter((o) => o.length > 0)
+// Helper to standardize failures
+function fail(message: string, fieldErrors?: FieldErrors): ActionFailure {
+  return { success: false, message, fieldErrors }
+}
 
-    const allowMultiple = formData.get('allowMultiple') === 'on'
-    const requireLogin = formData.get('requireLogin') === 'on'
-    const endDateRaw = String(formData.get('endDate') || '').trim()
+// -----------------------------------------------------------------------------
+// Input typing and parsing
+// -----------------------------------------------------------------------------
+interface CreatePollInput {
+  question: string
+  options: string[]
+  allowMultiple: boolean
+  requireLogin: boolean
+  endDateRaw: string
+}
 
-    const fieldErrors: { question?: string; options?: string } = {}
-    if (!question) {
-      fieldErrors.question = 'Question is required'
-    }
-    if (options.length < 2) {
-      fieldErrors.options = 'Please provide at least 2 options'
-    }
-    if (Object.keys(fieldErrors).length > 0) {
-      return { success: false, fieldErrors }
-    }
+function parseCreatePollForm(formData: FormData): CreatePollInput {
+  const question = String(formData.get('question') || '').trim()
+  const options = (String(formData.get('options') || '') || '')
+    .split('\n')
+    .map((o) => o.trim())
+    .filter((o) => o.length > 0)
+  const allowMultiple = formData.get('allowMultiple') === 'on'
+  const requireLogin = formData.get('requireLogin') === 'on'
+  const endDateRaw = String(formData.get('endDate') || '').trim()
+  return { question, options, allowMultiple, requireLogin, endDateRaw }
+}
 
-    const supabase = createServerSupabase()
+function validateCreatePollInput(input: CreatePollInput): FieldErrors | null {
+  const fieldErrors: FieldErrors = {}
+  if (!input.question) {
+    fieldErrors.question = 'Question is required'
+  }
+  if (input.options.length < 2) {
+    fieldErrors.options = 'Please provide at least 2 options'
+  }
+  return Object.keys(fieldErrors).length > 0 ? fieldErrors : null
+}
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+// -----------------------------------------------------------------------------
+// Supabase and auth helpers
+// -----------------------------------------------------------------------------
+function getSupabase() {
+  return createServerSupabase()
+}
 
-    const createdBy = user?.id || null
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const supabase = getSupabase()
+  const { data } = await supabase.auth.getUser()
+  return data.user?.id ?? null
+}
 
-    const { data: poll, error: pollError } = await supabase
-      .from('polls')
-      .insert({
-        question,
-        created_by: createdBy,
-        allow_multiple: allowMultiple,
-        require_login: requireLogin,
-        expires_at: endDateRaw ? new Date(endDateRaw).toISOString() : null,
-      })
-      .select()
-      .single()
+// -----------------------------------------------------------------------------
+// Poll persistence helpers
+// -----------------------------------------------------------------------------
+type InsertedPoll = Pick<Poll, 'id'>
 
-    if (pollError || !poll) {
-      return { success: false, message: pollError?.message || 'Failed to create poll' }
-    }
+async function insertPoll(input: CreatePollInput, createdBy: string | null): Promise<InsertedPoll> {
+  const supabase = getSupabase()
+  const { data: poll, error } = await supabase
+    .from('polls')
+    .insert({
+      question: input.question,
+      created_by: createdBy,
+      allow_multiple: input.allowMultiple,
+      require_login: input.requireLogin,
+      expires_at: input.endDateRaw ? new Date(input.endDateRaw).toISOString() : null,
+    })
+    .select('id')
+    .single()
 
-    const optionsPayload = options.map((text: string) => ({
-      poll_id: poll.id,
-      text,
-    }))
+  if (error || !poll) {
+    throw new Error(error?.message || 'Failed to create poll')
+  }
 
-    const { error: optionsError } = await supabase
-      .from('poll_options')
-      .insert(optionsPayload)
+  return { id: poll.id }
+}
 
-    if (optionsError) {
-      return { success: false, message: optionsError.message }
-    }
-
-    revalidatePath('/polls')
-    return { success: true, pollId: poll.id }
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unexpected error'
-    return { success: false, message }
+async function insertPollOptions(pollId: string, options: string[]): Promise<void> {
+  const supabase = getSupabase()
+  const payload = options.map((text) => ({ poll_id: pollId, text }))
+  const { error } = await supabase.from('poll_options').insert(payload)
+  if (error) {
+    throw new Error(error.message)
   }
 }
 
+// -----------------------------------------------------------------------------
+// Server action
+// -----------------------------------------------------------------------------
+export type CreatePollResult = ActionResult<{ pollId: string }>
+
+export async function createPoll(_prevState: unknown, formData: FormData): Promise<CreatePollResult> {
+  try {
+    const input = parseCreatePollForm(formData)
+    const fieldErrors = validateCreatePollInput(input)
+    if (fieldErrors) {
+      return fail('Invalid input', fieldErrors)
+    }
+
+    const userId = await getAuthenticatedUserId()
+    const { id: pollId } = await insertPoll(input, userId)
+    await insertPollOptions(pollId, input.options)
+
+    revalidatePath('/polls')
+    return { success: true, data: { pollId } }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unexpected error'
+    return fail(message)
+  }
+}
 
