@@ -21,7 +21,7 @@ export default function Navbar() {
   if (pathname === '/') return null;
   
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-sm py-3 px-4">
+    <nav className="backdrop-blur-md bg-white/80 dark:bg-gray-800/80 shadow-lg py-3 px-4">
       <div className="container mx-auto flex justify-between items-center">
         <Link 
           href="/" 

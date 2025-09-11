@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800`}
       >
         <AuthProvider>
           <Navbar />
@@ -35,7 +35,7 @@ export default function RootLayout({
             {children}
           </main>
         </AuthProvider>
-        <footer className="py-4 text-center text-xs text-gray-500 dark:text-gray-400 border-t dark:border-gray-700 dark:bg-gray-800">
+        <footer className="backdrop-blur-md bg-white/70 dark:bg-gray-800/70 py-4 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-white/20">
           <div className="container mx-auto">
             © {new Date().getFullYear()} SnapVote. All rights reserved.
           </div>
