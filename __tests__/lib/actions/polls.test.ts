@@ -27,6 +27,7 @@ describe('createPoll', () => {
 
     expect(result).toEqual({
       success: false,
+      message: 'Invalid input',
       fieldErrors: {
         question: 'Question is required',
       },
@@ -47,6 +48,7 @@ describe('createPoll', () => {
 
     expect(result).toEqual({
       success: false,
+      message: 'Invalid input',
       fieldErrors: {
         options: 'Please provide at least 2 options',
       },
@@ -86,7 +88,9 @@ describe('createPoll', () => {
 
     expect(result).toEqual({
       success: true,
-      pollId: 'test-poll-id',
+      data: {
+        pollId: 'test-poll-id',
+      },
     });
 
     // Verify that Supabase was called correctly

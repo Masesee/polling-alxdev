@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createPoll, type CreatePollResult } from '../../lib/actions/polls';
+// Removed: import { createPoll, type CreatePollResult } from '../../lib/actions/polls';
 import { Alert } from '../ui/alert';
+import type { ActionResult, FieldErrors } from '../../lib/server-utils/polls';
+
+/**
+ * Type definition for the result of the createPoll API call.
+ */
+export type CreatePollResult = ActionResult<{ pollId: string }>
 
 /**
  * SubmitButton component displays a button for form submission.
  * It shows a loading state when the form is pending.
  */
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"
@@ -27,7 +31,7 @@ function SubmitButton() {
  * CreatePollForm component provides a form for users to create new polls.
  * It includes fields for the poll question, multiple options, and optional settings like
  * allowing multiple selections, requiring login, and setting an end date.
- * It integrates with a server action (`createPoll`) for form submission and handles client-side state and validation feedback.
+ * It integrates with an API route for form submission and handles client-side state and validation feedback.
  */
 export default function CreatePollForm() {
   const router = useRouter();
@@ -41,21 +45,20 @@ export default function CreatePollForm() {
   const [allowMultipleOptions, setAllowMultipleOptions] = useState(false);
   const [requireLogin, setRequireLogin] = useState(true);
   const [endDate, setEndDate] = useState('');
-  // Memoized string of options joined by newline for hidden input.
-  const optionsJoined = useMemo(() => options.join('\n'), [options]);
+  // State for API response and loading status.
+  const [state, setState] = useState<CreatePollResult | null>(null);
+  const [pending, setPending] = useState(false);
+
   // Refs for focusing input fields on validation errors.
   const questionRef = useRef<HTMLInputElement | null>(null);
   const firstOptionRef = useRef<HTMLInputElement | null>(null);
-
-  // useActionState hook to manage form submission state and server action results.
-  const [state, formAction] = useActionState<CreatePollResult, FormData>(createPoll as any, { success: false });
 
   // Effect hook to handle redirection or focus on error after form submission.
   useEffect(() => {
     if (!state) return;
     // If poll creation was successful, redirect to the new poll's detail page.
-    if ('success' in state && state.success === true && state.pollId) {
-      router.push(`/polls/${state.pollId}`);
+    if ('success' in state && state.success === true && state.data?.pollId) {
+      router.push(`/polls/${state.data.pollId}`);
       return;
     }
     // If there are field errors, focus on the relevant input field.
@@ -98,7 +101,46 @@ export default function CreatePollForm() {
     setOptions(newOptions);
   };
 
-  // Client-side validation is minimal as server action handles comprehensive validation.
+  /**
+   * Handles the form submission, sending data to the API route.
+   * @param event The form submission event.
+   */
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPending(true);
+    setState(null); // Clear previous state
+
+    const formData = {
+      question,
+      options: options.filter(option => option.trim() !== ''), // Filter out empty options
+      allowMultiple: allowMultipleOptions,
+      requireLogin,
+      endDateRaw: endDate,
+    };
+
+    try {
+      const response = await fetch('/api/polls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result: CreatePollResult = await response.json();
+      setState(result);
+
+      if (!response.ok) {
+        // Handle HTTP errors (e.g., 400, 500) that still return a JSON body
+        console.error('API Error:', result.message || 'Unknown error');
+      }
+    } catch (error: any) {
+      console.error('Network or unexpected error:', error);
+      setState({ success: false, message: error.message || 'An unexpected error occurred.' });
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-2xl space-y-8">
@@ -137,7 +179,7 @@ export default function CreatePollForm() {
         <Alert variant="error" title="Unable to create poll" description={state.message} />
       )}
 
-      <form className="mt-4 space-y-6" action={formAction} aria-describedby="form-errors">
+      <form className="mt-4 space-y-6" onSubmit={handleSubmit} aria-describedby="form-errors">
         {activeTab === 'basic' && (
           <div className="space-y-4" id="tab-panel-basic" role="tabpanel" aria-labelledby="tab-basic">
             <div>
@@ -168,8 +210,7 @@ export default function CreatePollForm() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Poll Options
               </label>
-              {/* Hidden field aggregates options for the server action */}
-              <input type="hidden" name="options" value={optionsJoined} />
+              {/* Removed: Hidden field aggregates options for the server action */}
               {options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <input
@@ -202,7 +243,7 @@ export default function CreatePollForm() {
               <button
                 type="button"
                 onClick={addOption}
-                className="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                className="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-8"
               >
                 Add Option
               </button>
@@ -268,7 +309,7 @@ export default function CreatePollForm() {
           >
             Cancel
           </button>
-          <SubmitButton />
+          <SubmitButton pending={pending} />
         </div>
       </form>
     </div>
