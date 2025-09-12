@@ -1,7 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from 'next/navigation';
+import { createServerSupabase } from '../lib/supabase/server';
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect('/polls');
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800">
       <main className="flex flex-col items-center text-center max-w-3xl mx-auto w-full">
