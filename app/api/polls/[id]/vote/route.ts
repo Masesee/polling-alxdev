@@ -1,11 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-// Ensure Request is defined for test environment
-// This is a workaround for environments where Request might not be globally available, e.g., during testing.
-if (typeof Request === 'undefined' && typeof global !== 'undefined') {
-  // @ts-ignore - Mock Request for test environment
-  global.Request = class MockRequest {};
-}
+
 
 /**
  * Handles POST requests for voting on a specific poll.
