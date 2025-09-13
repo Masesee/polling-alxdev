@@ -17,10 +17,10 @@ if (typeof Request === 'undefined' && typeof global !== 'undefined') {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const pollId = params.id;
+    const pollId = context.params.id;
     const body = await request.json();
     const { optionId } = body;
     
