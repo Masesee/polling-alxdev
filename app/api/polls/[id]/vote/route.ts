@@ -15,7 +15,10 @@ if (typeof Request === 'undefined' && typeof global !== 'undefined') {
  * @param params An object containing the poll ID from the URL.
  * @returns A JSON response indicating the success or failure of the vote.
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const pollId = params.id;
     const body = await request.json();
