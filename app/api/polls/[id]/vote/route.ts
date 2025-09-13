@@ -1,19 +1,20 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
 
 /**
  * Handles POST requests for voting on a specific poll.
  * This route processes votes for a given poll ID and option ID.
  * It currently uses a mock successful vote and needs Supabase integration for actual vote recording.
  * @param request The incoming Next.js request object, containing the optionId in its body.
- * @param params An object containing the poll ID from the URL.
+ * @param context An object containing the route parameters, including the poll ID.
  * @returns A JSON response indicating the success or failure of the vote.
  */
-export async function POST(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const pollId = context.params.id;
     const body = await request.json();
