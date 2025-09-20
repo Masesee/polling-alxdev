@@ -24,6 +24,14 @@ export default function LoginForm() {
   const router = useRouter();
   const supabase = createClient();
 
+  const validateForm = () => {
+    const nextFieldErrors: { email?: string; password?: string } = {};
+    if (!email) nextFieldErrors.email = 'Email is required';
+    if (!password) nextFieldErrors.password = 'Password is required';
+    setFieldErrors(nextFieldErrors);
+    return Object.keys(nextFieldErrors).length === 0;
+  };
+
   /**
    * Handles the form submission for user login.
    * Performs client-side validation and attempts to sign in the user with Supabase.
@@ -33,17 +41,10 @@ export default function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    // Initialize an object to hold validation errors.
-    const nextFieldErrors: { email?: string; password?: string } = {};
-    // Validate if email and password fields are not empty.
-    if (!email) nextFieldErrors.email = 'Email is required';
-    if (!password) nextFieldErrors.password = 'Password is required';
-    setFieldErrors(nextFieldErrors);
     
-    // If there are any validation errors, stop the submission and focus on the email field if it has an error.
-    if (Object.keys(nextFieldErrors).length > 0) {
+    if (!validateForm()) {
       setIsLoading(false);
-      if (nextFieldErrors.email && emailRef.current) emailRef.current.focus();
+      if (fieldErrors.email && emailRef.current) emailRef.current.focus();
       return;
     }
 
