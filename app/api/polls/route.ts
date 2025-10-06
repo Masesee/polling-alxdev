@@ -7,6 +7,7 @@ import {
   insertPoll,
   insertPollOptions,
   CreatePollInput,
+  getUserPolls,
 } from '../../../lib/server-utils/polls'
 
 /**
@@ -23,6 +24,24 @@ function parseCreatePollJson(body: any): CreatePollInput {
   const requireLogin = Boolean(body.requireLogin)
   const endDateRaw = String(body.endDateRaw || '').trim()
   return { question, options, allowMultiple, requireLogin, endDateRaw }
+}
+
+export async function GET() {
+  try {
+    const userId = await getAuthenticatedUserId();
+    
+    // If user is not authenticated, return empty polls array
+    if (!userId) {
+      return NextResponse.json({ success: true, polls: [] }, { status: 200 });
+    }
+    
+    const polls = await getUserPolls(userId);
+    
+    return NextResponse.json({ success: true, polls }, { status: 200 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unexpected error';
+    return NextResponse.json(fail(message), { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

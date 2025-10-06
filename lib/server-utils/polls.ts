@@ -162,3 +162,65 @@ export async function insertPollOptions(pollId: string, options: string[]): Prom
     throw new Error(error.message)
   }
 }
+
+/**
+ * Retrieves all polls created by a specific user.
+ * @param userId The ID of the user whose polls to retrieve.
+ * @returns An array of Poll objects.
+ */
+export async function getUserPolls(userId: string): Promise<Poll[]> {
+  const supabase = getSupabase();
+  
+  // First, get all polls created by the user
+  const { data: pollsData, error: pollsError } = await supabase
+    .from('polls')
+    .select('id, question, created_at, created_by, allow_multiple, require_login, expires_at')
+    .eq('created_by', userId)
+    .order('created_at', { ascending: false });
+
+  if (pollsError) {
+    throw new Error(`Failed to fetch polls: ${pollsError.message}`);
+  }
+
+  if (!pollsData || pollsData.length === 0) {
+    return [];
+  }
+
+  // Get all options for these polls
+  const pollIds = pollsData.map(poll => poll.id);
+  const { data: optionsData, error: optionsError } = await supabase
+    .from('poll_options')
+    .select('id, poll_id, text, votes')
+    .in('poll_id', pollIds);
+
+  if (optionsError) {
+    throw new Error(`Failed to fetch poll options: ${optionsError.message}`);
+  }
+
+  // Map the database results to our Poll type
+  const polls: Poll[] = pollsData.map(poll => {
+    const options = optionsData
+      ? optionsData
+          .filter(option => option.poll_id === poll.id)
+          .map(option => ({
+            id: option.id,
+            text: option.text,
+            votes: option.votes || 0
+          }))
+      : [];
+
+    return {
+      id: poll.id,
+      question: poll.question,
+      options,
+      createdBy: poll.created_by,
+      createdAt: new Date(poll.created_at),
+      isActive: poll.is_active,
+      allowMultiple: poll.allow_multiple,
+      requireLogin: poll.require_login,
+      endDate: poll.expires_at ? new Date(poll.expires_at) : undefined
+    };
+  });
+
+  return polls;
+}

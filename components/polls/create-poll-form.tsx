@@ -20,9 +20,19 @@ function SubmitButton({ pending }: { pending: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-md border border-transparent bg-blue-600 py-2.5 px-5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-200"
     >
-      {pending ? 'Creating Poll...' : 'Create Poll'}
+      {pending ? (
+        <span className="flex items-center gap-2">
+          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Creating Poll...
+        </span>
+      ) : (
+        'Create Poll'
+      )}
     </button>
   );
 }
@@ -42,6 +52,10 @@ export default function CreatePollForm() {
   // State to manage active tab (Basic Info or Settings).
   const [activeTab, setActiveTab] = useState('basic');
   // State for poll settings.
+  const [settings, setSettings] = useState({
+    allowMultipleVotes: false,
+    requireName: false
+  });
   const [allowMultipleOptions, setAllowMultipleOptions] = useState(false);
   const [requireLogin, setRequireLogin] = useState(true);
   const [endDate, setEndDate] = useState('');
@@ -191,7 +205,7 @@ export default function CreatePollForm() {
                 name="question"
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2.5 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white transition-colors duration-200"
                 placeholder="What would you like to ask?"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
@@ -215,24 +229,22 @@ export default function CreatePollForm() {
                 <div key={index} className="flex items-center space-x-2">
                   <input
                     type="text"
-                    required
-                    className="block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                    placeholder={`Option ${index + 1}`}
                     value={option}
                     onChange={(e) => handleOptionChange(index, e.target.value)}
-                    aria-invalid={!!(state && 'fieldErrors' in state && state.fieldErrors?.options)}
-                    aria-describedby={state && 'fieldErrors' in state && state.fieldErrors?.options ? 'options-error' : undefined}
-                    ref={index === 0 ? firstOptionRef : undefined}
+                    placeholder={`Option ${index + 1}`}
+                    className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2.5 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white transition-colors duration-200"
+                    required
                   />
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(index)}
-                      className="inline-flex items-center rounded-md border border-transparent bg-red-100 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    >
-                      Remove
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeOption(index)}
+                    className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-100 p-2 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
+                    aria-label={`Remove option ${index + 1}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               ))}
               {state && 'fieldErrors' in state && state.fieldErrors?.options && (
@@ -243,8 +255,11 @@ export default function CreatePollForm() {
               <button
                 type="button"
                 onClick={addOption}
-                className="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-8"
+                className="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-8 transition-colors duration-200"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
                 Add Option
               </button>
             </div>
@@ -298,6 +313,49 @@ export default function CreatePollForm() {
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
+            </div>
+            
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center">
+                <input
+                  id="allowMultipleVotes"
+                  name="allowMultipleVotes"
+                  type="checkbox"
+                  checked={settings.allowMultipleVotes}
+                  onChange={(e) =>
+                    setSettings({ ...settings, allowMultipleVotes: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 transition-colors duration-200"
+                />
+                <label htmlFor="allowMultipleVotes" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                  Allow multiple votes per person
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="requireName"
+                  name="requireName"
+                  type="checkbox"
+                  checked={settings.requireName}
+                  onChange={(e) =>
+                    setSettings({ ...settings, requireName: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 transition-colors duration-200"
+                />
+                <label htmlFor="requireName" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                  Require name for voting
+                </label>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex justify-between">
+              <button
+                type="button"
+                className="rounded-md bg-white dark:bg-gray-700 py-2.5 px-5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <SubmitButton pending={pending} />
             </div>
           </div>
         )}

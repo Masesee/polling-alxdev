@@ -37,9 +37,9 @@ export default function ThemeToggle() {
       className="inline-flex items-center gap-2 rounded-md border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
     >
       {theme === 'dark' ? (
-        <span aria-hidden>🌙</span>
+        <span aria-hidden suppressHydrationWarning>🌙</span>
       ) : (
-        <span aria-hidden>☀️</span>
+        <span aria-hidden suppressHydrationWarning>☀️</span>
       )}
       <span suppressHydrationWarning>{theme === 'dark' ? 'Dark' : 'Light'}</span>
     </button>
