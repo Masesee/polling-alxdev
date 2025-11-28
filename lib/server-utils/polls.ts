@@ -187,7 +187,7 @@ export async function getUserPolls(userId: string): Promise<Poll[]> {
   }
 
   // Get all options for these polls
-  const pollIds = pollsData.map(poll => poll.id);
+  const pollIds = pollsData.map((poll: any) => poll.id);
   const { data: optionsData, error: optionsError } = await supabase
     .from('poll_options')
     .select('id, poll_id, text, votes')
@@ -198,11 +198,11 @@ export async function getUserPolls(userId: string): Promise<Poll[]> {
   }
 
   // Map the database results to our Poll type
-  const polls: Poll[] = pollsData.map(poll => {
+  const polls: Poll[] = pollsData.map((poll: any) => {
     const options = optionsData
       ? optionsData
-        .filter(option => option.poll_id === poll.id)
-        .map(option => ({
+        .filter((option: any) => option.poll_id === poll.id)
+        .map((option: any) => ({
           id: option.id,
           text: option.text,
           votes: option.votes || 0
