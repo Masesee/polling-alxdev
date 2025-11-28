@@ -3,9 +3,33 @@ import { cookies } from 'next/headers'
 
 export async function createServerSupabase() {
   const cookieStore = await cookies()
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase URL or Anon Key is missing in createServerSupabase.');
+    // Return a mock client that mimics the structure needed by the app
+    // to prevent a 500 error crash, allowing the UI to render (likely in a logged-out state).
+    return {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            order: () => ({ data: [], error: null }),
+            single: () => ({ data: null, error: null }),
+            maybeSingle: () => ({ data: null, error: null }),
+          }),
+        }),
+      }),
+    } as any;
+  }
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
