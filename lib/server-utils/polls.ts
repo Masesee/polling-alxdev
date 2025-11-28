@@ -96,16 +96,16 @@ export function validateCreatePollInput(input: CreatePollInput): FieldErrors | n
  * Initializes and returns a Supabase client for server-side operations.
  * @returns A Supabase client instance.
  */
-export function getSupabase() {
-  return createServerSupabase()
+export async function getSupabase() {
+  return await createServerSupabase()
 }
 
 /**
  * Retrieves the ID of the currently authenticated user.
- * @returns The user\'s ID if authenticated, otherwise null.
+ * @returns The user's ID if authenticated, otherwise null.
  */
 export async function getAuthenticatedUserId(): Promise<string | null> {
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const { data } = await supabase.auth.getUser()
   return data.user?.id ?? null
 }
@@ -126,7 +126,7 @@ export type InsertedPoll = Pick<Poll, 'id'>
  * @throws Error if the poll creation fails.
  */
 export async function insertPoll(input: CreatePollInput, createdBy: string | null): Promise<InsertedPoll> {
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   const { data: poll, error } = await supabase
     .from('polls')
     .insert({
@@ -154,7 +154,7 @@ export async function insertPoll(input: CreatePollInput, createdBy: string | nul
  * @throws Error if the option insertion fails.
  */
 export async function insertPollOptions(pollId: string, options: string[]): Promise<void> {
-  const supabase = getSupabase()
+  const supabase = await getSupabase()
   // Map option text to an array of objects suitable for Supabase insertion.
   const payload = options.map((text) => ({ poll_id: pollId, text }))
   const { error } = await supabase.from('poll_options').insert(payload)
@@ -169,8 +169,8 @@ export async function insertPollOptions(pollId: string, options: string[]): Prom
  * @returns An array of Poll objects.
  */
 export async function getUserPolls(userId: string): Promise<Poll[]> {
-  const supabase = getSupabase();
-  
+  const supabase = await getSupabase();
+
   // First, get all polls created by the user
   const { data: pollsData, error: pollsError } = await supabase
     .from('polls')
@@ -201,12 +201,12 @@ export async function getUserPolls(userId: string): Promise<Poll[]> {
   const polls: Poll[] = pollsData.map(poll => {
     const options = optionsData
       ? optionsData
-          .filter(option => option.poll_id === poll.id)
-          .map(option => ({
-            id: option.id,
-            text: option.text,
-            votes: option.votes || 0
-          }))
+        .filter(option => option.poll_id === poll.id)
+        .map(option => ({
+          id: option.id,
+          text: option.text,
+          votes: option.votes || 0
+        }))
       : [];
 
     return {

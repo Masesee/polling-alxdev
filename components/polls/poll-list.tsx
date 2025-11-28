@@ -1,103 +1,137 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Poll } from '../../lib/types';
 import { formatDate } from '../../lib/utils';
-import { Spinner } from '../ui/spinner';
 
-export default function PollList() {
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface PollListProps {
+  initialPolls: Poll[];
+}
 
-  useEffect(() => {
-    const fetchPolls = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch actual polls from Supabase
-        const response = await fetch('/api/polls');
-        const data = await response.json();
-        
-        if (data.success) {
-          setPolls(data.polls || []);
-        } else {
-          // Handle API error response
-          console.error('API error:', data.message);
-          setPolls([]);
-        }
-      } catch (error) {
-        console.error('Error fetching polls:', error);
-        // If there's an error, set empty polls array
-        setPolls([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+const EXAMPLE_POLLS: Poll[] = [
+  {
+    id: 'example-1',
+    question: 'What is your favorite programming language?',
+    options: [
+      { id: '1', text: 'TypeScript', votes: 45 },
+      { id: '2', text: 'Python', votes: 32 },
+      { id: '3', text: 'Rust', votes: 18 },
+      { id: '4', text: 'Go', votes: 12 },
+    ],
+    createdBy: 'example',
+    createdAt: new Date(),
+    isActive: true,
+  },
+  {
+    id: 'example-2',
+    question: 'Where should we go for the team retreat?',
+    options: [
+      { id: '1', text: 'Bali', votes: 15 },
+      { id: '2', text: 'Swiss Alps', votes: 8 },
+      { id: '3', text: 'Kyoto', votes: 12 },
+    ],
+    createdBy: 'example',
+    createdAt: new Date(),
+    isActive: true,
+  },
+  {
+    id: 'example-3',
+    question: 'Best time for the weekly sync?',
+    options: [
+      { id: '1', text: 'Monday 10am', votes: 5 },
+      { id: '2', text: 'Tuesday 2pm', votes: 8 },
+      { id: '3', text: 'Friday 11am', votes: 3 },
+    ],
+    createdBy: 'example',
+    createdAt: new Date(),
+    isActive: true,
+  },
+];
 
-    fetchPolls();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-10 flex flex-col items-center gap-3">
-        <Spinner size={24} className="text-blue-600" />
-        <p className="text-gray-600 dark:text-gray-300">Loading polls...</p>
-      </div>
-    );
-  }
-
-  if (polls.length === 0) {
-    return (
-      <div className="text-center py-16 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-        <p className="text-gray-600 dark:text-gray-300 mb-4">No polls created yet.</p>
-        <Link href="/polls/create" className="inline-flex items-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-          Create your first poll
-        </Link>
-      </div>
-    );
-  }
+export default function PollList({ initialPolls }: PollListProps) {
+  const [polls] = useState<Poll[]>(initialPolls);
+  const isEmpty = polls.length === 0;
+  const displayPolls = isEmpty ? EXAMPLE_POLLS : polls;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-slide-up">
+      {isEmpty && (
+        <div className="rounded-2xl bg-primary/5 border border-primary/10 p-6 text-center mb-8">
+          <h3 className="text-lg font-semibold text-primary mb-2">No polls yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Here are some examples of what your polls will look like. Click on any example to see the details!
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {polls.map((poll) => (
-          <div 
-            key={poll.id} 
-            className="rounded-lg p-5 sm:p-6 bg-white dark:bg-gray-800/90 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:-translate-y-1"
+        {displayPolls.map((poll, index) => (
+          <Link
+            key={poll.id}
+            href={`/polls/${poll.id}`}
+            className={`group relative flex flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 ${isEmpty
+                ? 'bg-muted/30 border border-dashed border-border opacity-70 hover:opacity-100 hover:border-primary/50'
+                : 'glass hover:shadow-xl hover:shadow-primary/5 border border-border/50'
+              }`}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            <h3 className="font-semibold text-base sm:text-lg mb-3 dark:text-white line-clamp-2">{poll.question}</h3>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 mb-4">
-              <span className="font-medium">{poll.options.length} options</span>
-              <span className="mx-2">•</span>
-              <span className="font-medium">{poll.options.reduce((sum, option) => sum + option.votes, 0)} votes</span>
-            </p>
-            <div className="space-y-2.5 mb-5">
-              {poll.options.map((option) => (
-                <div key={option.id} className="flex justify-between text-xs sm:text-sm dark:text-gray-200">
-                  <span className="font-medium truncate mr-2">{option.text}</span>
-                  <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">{option.votes} votes</span>
-                </div>
-              ))}
+            {isEmpty && (
+              <div className="absolute -top-3 -right-3 rotate-12 bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-md border border-yellow-200 shadow-sm z-10">
+                EXAMPLE
+              </div>
+            )}
+
+            <div className="flex-1">
+              <h3 className="font-display font-bold text-lg mb-3 line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+                {poll.question}
+              </h3>
+
+              <div className="space-y-3 mb-6">
+                {poll.options.slice(0, 3).map((option) => {
+                  const totalVotes = poll.options.reduce((sum, o) => sum + (o.votes || 0), 0);
+                  const percentage = totalVotes > 0 ? Math.round(((option.votes || 0) / totalVotes) * 100) : 0;
+
+                  return (
+                    <div key={option.id} className="relative">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-medium text-muted-foreground truncate max-w-[70%]">{option.text}</span>
+                        <span className="text-muted-foreground">{percentage}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ${isEmpty ? 'bg-gray-400' : 'bg-primary'}`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {poll.options.length > 3 && (
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    + {poll.options.length - 3} more options
+                  </p>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-400 mb-4">
-              Created on {formatDate(poll.createdAt)}
-            </p>
-            <div className="flex justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
-              <Link
-                href={`/polls/${poll.id}`}
-                className="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-              >
-                View Results
-              </Link>
-              <Link
-                href={`/share/${poll.id}`}
-                className="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-              >
-                Share Poll
-              </Link>
+
+            <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground text-xs">
+                {isEmpty ? 'Just now' : formatDate(poll.createdAt)}
+              </span>
+
+              <div className="flex gap-3">
+                <span className="font-medium text-primary hover:text-primary/80 transition-colors">
+                  View
+                </span>
+                {!isEmpty && (
+                  <span className="font-medium text-muted-foreground hover:text-foreground transition-colors">
+                    Share
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

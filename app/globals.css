@@ -1,25 +1,167 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --border: #e5e7eb;
+@theme {
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-outfit);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-up: slide-up 0.5s ease-out;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }
 
+:root {
+  /* Light Mode - High Contrast & Visibility */
+  --background: #f8fafc;
+  /* Slate 50 - Off-white base for contrast */
+  --foreground: #0f172a;
+  /* Slate 900 - Deep black for text */
 
+  --primary: #4f46e5;
+  /* Indigo 600 - Vibrant and accessible */
+  --primary-foreground: #ffffff;
+
+  --secondary: #db2777;
+  /* Pink 600 */
+  --secondary-foreground: #ffffff;
+
+  --accent: #7c3aed;
+  /* Violet 600 */
+  --accent-foreground: #ffffff;
+
+  --muted: #e2e8f0;
+  /* Slate 200 */
+  --muted-foreground: #64748b;
+  /* Slate 500 */
+
+  --card: rgba(255, 255, 255, 0.85);
+  /* High opacity white glass */
+  --card-foreground: #0f172a;
+
+  --border: #cbd5e1;
+  /* Slate 300 - Visible borders */
+  --input: #cbd5e1;
+  --ring: #4f46e5;
+
+  --font-inter: 'Inter', sans-serif;
+  --font-outfit: 'Outfit', sans-serif;
+}
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --border: #27272a;
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
+  /* Dark Mode - Deep & Rich */
+  --background: #020617;
+  /* Slate 950 - Deepest blue/black */
+  --foreground: #f8fafc;
+  /* Slate 50 */
+
+  --primary: #818cf8;
+  /* Indigo 400 */
+  --primary-foreground: #0f172a;
+
+  --secondary: #f472b6;
+  /* Pink 400 */
+  --secondary-foreground: #0f172a;
+
+  --accent: #a78bfa;
+  /* Violet 400 */
+  --accent-foreground: #0f172a;
+
+  --muted: #1e293b;
+  /* Slate 800 */
+  --muted-foreground: #94a3b8;
+  /* Slate 400 */
+
+  --card: rgba(15, 23, 42, 0.75);
+  /* Dark glass */
+  --card-foreground: #f8fafc;
+
+  --border: #334155;
+  /* Slate 700 */
+  --input: #334155;
+  --ring: #818cf8;
 }
 
+/* Enhanced Glassmorphism Utilities */
+.glass {
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: var(--primary);
+}
+
+.dark .glass-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Base Styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
 }

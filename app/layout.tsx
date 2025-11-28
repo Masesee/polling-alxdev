@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/ui/navbar";
 import { AuthProvider } from '@/lib/context/auth-context';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const outfit = Outfit({
   subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -43,17 +45,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen flex flex-col`}
+        className={`${inter.variable} ${outfit.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}
       >
         <AuthProvider>
           <Navbar />
-          <main className="flex-grow">
+          <main className="flex-grow pt-16">
             {children}
           </main>
         </AuthProvider>
-        <footer className="backdrop-blur-md bg-white/70 dark:bg-gray-800/70 py-4 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-white/20 dark:border-gray-700">
-          <div className="container mx-auto">
-            © {new Date().getFullYear()} SnapVote. All rights reserved.
+        <footer className="border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-6 md:py-0">
+          <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+            <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
+              © {new Date().getFullYear()} SnapVote. Built by <span className="font-medium text-foreground">ALX Devs</span>.
+            </p>
           </div>
         </footer>
       </body>
