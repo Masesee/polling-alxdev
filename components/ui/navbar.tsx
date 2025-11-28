@@ -31,8 +31,8 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: '/polls', label: 'My Polls', protected: true },
-    { href: '/polls/create', label: 'Create Poll', protected: true },
+    { href: '/polls', label: user ? 'My Polls' : 'Polls', protected: false },
+    { href: '/polls/create', label: 'Create Poll', protected: false },
   ];
 
   return (
