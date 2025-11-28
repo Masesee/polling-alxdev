@@ -174,7 +174,7 @@ export async function getUserPolls(userId: string): Promise<Poll[]> {
   // First, get all polls created by the user
   const { data: pollsData, error: pollsError } = await supabase
     .from('polls')
-    .select('id, question, created_at, created_by, allow_multiple, require_login, expires_at')
+    .select('id, question, created_at, created_by, allow_multiple, require_login, expires_at, is_active')
     .eq('created_by', userId)
     .order('created_at', { ascending: false });
 

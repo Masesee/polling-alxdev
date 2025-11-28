@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { Spinner } from '@/components/ui/spinner';
 import RegisterForm from '../../../components/auth/register-form';
 
 export default function RegisterPage() {
@@ -10,7 +12,9 @@ export default function RegisterPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        <RegisterForm />
+        <Suspense fallback={<div className="flex justify-center"><Spinner /></div>}>
+          <RegisterForm />
+        </Suspense>
       </div>
     </div>
   );
