@@ -1,5 +1,7 @@
 # Polling Application with QR Code Sharing
 
+[![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](https://snapvotepolls.vercel.app/)
+
 A full-stack web application that allows users to create polls, share them via unique links and QR codes, and collect votes. Built as part of the ALX AI for Developers program.
 
 ## Project Overview
@@ -8,8 +10,8 @@ This application provides a robust platform for creating and managing polls. Use
 
 ## Tech Stack
 
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS v4
+- **Backend**: Next.js API Routes (Server Actions & Route Handlers)
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
 - **Deployment**: Vercel
@@ -109,7 +111,9 @@ This project demonstrates the integration of various AI tools throughout the dev
 
 ## Deployment
 
-The application is deployed on Vercel. You can deploy your own instance by connecting your GitHub repository to Vercel and configuring the environment variables.
+The application is deployed on Vercel. You can access the live version here: [https://snapvotepolls.vercel.app/](https://snapvotepolls.vercel.app/)
+
+You can deploy your own instance by connecting your GitHub repository to Vercel and configuring the environment variables.
 
 ## License
 
